@@ -10,7 +10,10 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MONGO_HOST": "localhost",
-        "MONGO_PORT": "27017"
+        "MONGO_PORT": "27017",
+        "MONGO_DB_NAME": "OrdersDatabase",
+        "UsersMicroservice__Host": "localhost",
+        "UsersMicroservice__Port": "5025"
       }
     },
     "https": {
@@ -22,7 +25,10 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MONGO_HOST": "localhost",
-        "MONGO_PORT": "27017"
+        "MONGO_PORT": "27017",
+        "MONGO_DB_NAME": "OrdersDatabase",
+        "UsersMicroservice__Host": "localhost",
+        "UsersMicroservice__Port": "5025"
       }
     },
     "Docker": {
