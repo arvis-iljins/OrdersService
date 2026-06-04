@@ -22,17 +22,21 @@ builder.Services.AddSwaggerGen();
 //Cors
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddDefaultPolicy(policy =>
     {
-        builder.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
+        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
+var usersHost = builder.Configuration["UsersMicroservice:Host"];
+var usersPort = builder.Configuration["UsersMicroservice:Port"];
+Console.WriteLine($"[CONFIG] UsersMicroservice -> Host={usersHost}, Port={usersPort}");
+
 builder.Services.AddHttpClient<UsersMicroserviceClient>(client =>
 {
-    client.BaseAddress = new Uri(
-        $"http://{builder.Configuration["UsersMicroservice:Host"]}:{builder.Configuration["UsersMicroservice:Port"]}"
-    );
+    client.BaseAddress = new Uri($"http://{usersHost}:{usersPort}");
 });
 var app = builder.Build();
 
@@ -47,7 +51,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 //Auth
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
