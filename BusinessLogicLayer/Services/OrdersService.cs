@@ -43,9 +43,18 @@ namespace BusinessLogicLayer.Services
             foreach (var item in orderAddRequest.OrderItems)
             {
                 var itemValidationResult = await _orderItemAddRequestValidator.ValidateAsync(item);
-                if (!itemValidationResult.IsValid)
+
+                var product = await _userMicroserviceClient.GetUserById(item.ProductID);
+                if (product is not null)
                 {
-                    throw new ValidationException(itemValidationResult.Errors);
+                    if (!itemValidationResult.IsValid)
+                    {
+                        throw new ValidationException(itemValidationResult.Errors);
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Product with ID {item.ProductID} not found.");
                 }
             }
 

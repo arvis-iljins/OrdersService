@@ -13,7 +13,9 @@
         "MONGO_PORT": "27017",
         "MONGO_DB_NAME": "OrdersDatabase",
         "UsersMicroservice__Host": "localhost",
-        "UsersMicroservice__Port": "5025"
+        "UsersMicroservice__Port": "5025",
+        "ProductMicroservice__Host": "localhost",
+        "ProductMicroservice__Port": "5081"
       }
     },
     "https": {
@@ -28,7 +30,9 @@
         "MONGO_PORT": "27017",
         "MONGO_DB_NAME": "OrdersDatabase",
         "UsersMicroservice__Host": "localhost",
-        "UsersMicroservice__Port": "5025"
+        "UsersMicroservice__Port": "5025",
+        "ProductMicroservice__Host": "localhost",
+        "ProductMicroservice__Port": "5081"
       }
     },
     "Docker": {

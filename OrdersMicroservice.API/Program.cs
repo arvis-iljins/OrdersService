@@ -24,7 +24,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+        policy
+            .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -32,11 +33,16 @@ builder.Services.AddCors(options =>
 
 var usersHost = builder.Configuration["UsersMicroservice:Host"];
 var usersPort = builder.Configuration["UsersMicroservice:Port"];
-Console.WriteLine($"[CONFIG] UsersMicroservice -> Host={usersHost}, Port={usersPort}");
+var productHost = builder.Configuration["ProductMicroservice:Host"];
+var productPort = builder.Configuration["ProductMicroservice:Port"];
 
 builder.Services.AddHttpClient<UsersMicroserviceClient>(client =>
 {
     client.BaseAddress = new Uri($"http://{usersHost}:{usersPort}");
+});
+builder.Services.AddHttpClient<ProductMicroserviceClient>(client =>
+{
+    client.BaseAddress = new Uri($"http://{productHost}:{productPort}");
 });
 var app = builder.Build();
 
