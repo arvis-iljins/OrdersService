@@ -7,6 +7,6 @@ namespace BusinessLogicLayer.DTO
     )
     {
         public OrderAddRequest()
-            : this(default, default, default) { }
+            : this(default, default, []) { }
     }
 }

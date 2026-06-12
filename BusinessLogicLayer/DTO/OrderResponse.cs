@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace BusinessLogicLayer.DTO
 {
     public record OrderResponse(
@@ -13,6 +9,6 @@ namespace BusinessLogicLayer.DTO
     )
     {
         public OrderResponse()
-            : this(default, default, default, default, default) { }
+            : this(default, default, default, default, []) { }
     }
 }
