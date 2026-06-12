@@ -26,5 +26,11 @@ namespace DataAccessLayer.Entities
 
         [BsonElement("OrderItems")]
         public List<OrderItem> Items { get; set; } = [];
+
+        [BsonIgnore]
+        public string? UserEmail { get; set; }
+
+        [BsonIgnore]
+        public string? UserPersonName { get; set; }
     }
 }

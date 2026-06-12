@@ -49,6 +49,18 @@ namespace BusinessLogicLayer.Services
             }
         }
 
+        private async Task EnrichOrderWithUserDetails(Order? order)
+        {
+            if (order is null)
+                return;
+            var user = await _userMicroserviceClient.GetUserById(order.UserId);
+            if (user != null)
+            {
+                order.UserEmail = user.Email;
+                order.UserPersonName = user.PersonName;
+            }
+        }
+
         public async Task<OrderResponse?> AddOrder(OrderAddRequest orderAddRequest)
         {
             var validationResult = await _orderAddRequestValidator.ValidateAsync(orderAddRequest);
@@ -61,7 +73,8 @@ namespace BusinessLogicLayer.Services
                 if (!itemValidationResult.IsValid)
                     throw new ValidationException(itemValidationResult.Errors);
 
-                _ = await _productMicroserviceClient.GetProductById(item.ProductID)
+                _ =
+                    await _productMicroserviceClient.GetProductById(item.ProductID)
                     ?? throw new Exception($"Product with ID {item.ProductID} not found.");
             }
 
@@ -72,6 +85,7 @@ namespace BusinessLogicLayer.Services
             var orderEntity = _mapper.Map<Order>(orderAddRequest);
             var addedOrder = await _ordersRepository.AddOrder(orderEntity);
             await EnrichOrderWithProductDetails(addedOrder);
+            await EnrichOrderWithUserDetails(addedOrder);
             return _mapper.Map<OrderResponse?>(addedOrder);
         }
 
@@ -90,6 +104,7 @@ namespace BusinessLogicLayer.Services
                 return null;
 
             await EnrichOrderWithProductDetails(order);
+            await EnrichOrderWithUserDetails(order);
             return _mapper.Map<OrderResponse?>(order);
         }
 
@@ -97,7 +112,10 @@ namespace BusinessLogicLayer.Services
         {
             var orders = await _ordersRepository.GetOrders();
             foreach (var order in orders)
+            {
                 await EnrichOrderWithProductDetails(order);
+                await EnrichOrderWithUserDetails(order);
+            }
 
             return orders.Select(_mapper.Map<OrderResponse?>).ToList();
         }
@@ -106,7 +124,10 @@ namespace BusinessLogicLayer.Services
         {
             var orders = await _ordersRepository.GetOrdersByCondition(filter);
             foreach (var order in orders)
+            {
                 await EnrichOrderWithProductDetails(order);
+                await EnrichOrderWithUserDetails(order);
+            }
 
             return [.. orders.Select(_mapper.Map<OrderResponse?>)];
         }
@@ -135,6 +156,7 @@ namespace BusinessLogicLayer.Services
             var orderEntity = _mapper.Map<Order>(orderUpdateRequest);
             var updatedOrder = await _ordersRepository.UpdateOrder(orderEntity);
             await EnrichOrderWithProductDetails(updatedOrder);
+            await EnrichOrderWithUserDetails(updatedOrder);
             return _mapper.Map<OrderResponse?>(updatedOrder);
         }
     }

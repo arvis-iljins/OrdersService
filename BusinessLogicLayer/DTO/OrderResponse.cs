@@ -5,10 +5,12 @@ namespace BusinessLogicLayer.DTO
         Guid UserID,
         decimal TotalBill,
         DateTime OrderDate,
+        string? Email,
+        string? PersonName,
         List<OrderItemResponse> OrderItems
     )
     {
         public OrderResponse()
-            : this(default, default, default, default, []) { }
+            : this(default, default, default, default, default, default, []) { }
     }
 }
