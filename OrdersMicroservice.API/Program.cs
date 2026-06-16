@@ -3,6 +3,7 @@ using eCommerce.OrderMicroservice.BusinessLogicLayer;
 using eCommerce.OrderMicroservice.DataAccessLayer;
 using eCommerce.OrdersMicroservice.API.Middleware;
 using FluentValidation.AspNetCore;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,10 +37,29 @@ var usersPort = builder.Configuration["UsersMicroservice:Port"];
 var productHost = builder.Configuration["ProductMicroservice:Host"];
 var productPort = builder.Configuration["ProductMicroservice:Port"];
 
-builder.Services.AddHttpClient<UsersMicroserviceClient>(client =>
-{
-    client.BaseAddress = new Uri($"http://{usersHost}:{usersPort}");
-});
+builder
+    .Services.AddHttpClient<UsersMicroserviceClient>(client =>
+    {
+        client.BaseAddress = new Uri($"http://{usersHost}:{usersPort}");
+    })
+    .AddPolicyHandler(
+        Policy
+            .HandleResult<HttpResponseMessage>(response => !response.IsSuccessStatusCode)
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt =>
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                onRetry: (outcome, timespan, retryAttempt, context) => {
+                    // var serviceProvider = builder.Services.BuildServiceProvider();
+                    // var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+                    // logger.LogWarning(
+                    //     "Delaying for {delay} seconds, then making retry {retry}.",
+                    //     timespan.TotalSeconds,
+                    //     retryAttempt
+                    // );
+                }
+            )
+    );
 builder.Services.AddHttpClient<ProductMicroserviceClient>(client =>
 {
     client.BaseAddress = new Uri($"http://{productHost}:{productPort}");
