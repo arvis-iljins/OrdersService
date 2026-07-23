@@ -48,7 +48,14 @@ builder
             .Services.BuildServiceProvider()
             .GetRequiredService<IUserMicroservicePolicies>()
             .GetRetryPolicy()
+    )
+    .AddPolicyHandler(
+        builder
+            .Services.BuildServiceProvider()
+            .GetRequiredService<IUserMicroservicePolicies>()
+            .GetCircuitBreakerPolicy()
     );
+
 builder.Services.AddHttpClient<ProductMicroserviceClient>(client =>
 {
     client.BaseAddress = new Uri($"http://{productHost}:{productPort}");
