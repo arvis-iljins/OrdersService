@@ -2,17 +2,20 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BusinessLogicLayer.DTO;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace BusinessLogicLayer.HttpClients
 {
     public class ProductMicroserviceClient(
         HttpClient httpClient,
-        ILogger<ProductMicroserviceClient> logger
+        ILogger<ProductMicroserviceClient> logger,
+        IDistributedCache cache
     )
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly ILogger<ProductMicroserviceClient> _logger = logger;
+        private readonly IDistributedCache _cache = cache;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -22,9 +25,25 @@ namespace BusinessLogicLayer.HttpClients
         public async Task<ProductDTO?> GetProductById(int productId)
         {
             HttpResponseMessage response;
+            string cacheKey = $"product_{productId}";
 
             try
             {
+                var cachedProduct = await _cache.GetStringAsync(cacheKey);
+                if (cachedProduct is not null)
+                {
+                    var product = JsonSerializer.Deserialize<ProductDTO>(
+                        cachedProduct,
+                        JsonOptions
+                    );
+                    if (product is not null)
+                        _logger.LogInformation(
+                            "Product found in cache for productId {ProductId}",
+                            productId
+                        );
+                    return product;
+                }
+
                 response = await _httpClient.GetAsync($"/api/products/{productId}");
             }
             catch (HttpRequestException ex)
@@ -75,7 +94,16 @@ namespace BusinessLogicLayer.HttpClients
                         "Product service returned null deserialization result for productId {ProductId}",
                         productId
                     );
+                string productString = JsonSerializer.Serialize(product);
+                var cacheOptions = new DistributedCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(300))
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(100));
 
+                _cache.SetStringAsync(cacheKey, productString, cacheOptions);
+                _logger.LogInformation(
+                    "Product not found for productId in cache {ProductId}",
+                    productId
+                );
                 return product;
             }
             catch (JsonException ex)
