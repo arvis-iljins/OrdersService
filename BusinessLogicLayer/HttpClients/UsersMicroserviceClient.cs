@@ -2,17 +2,20 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BusinessLogicLayer.DTO;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace BusinessLogicLayer.HttpClients
 {
     public class UsersMicroserviceClient(
         HttpClient httpClient,
-        ILogger<UsersMicroserviceClient> logger
+        ILogger<UsersMicroserviceClient> logger,
+        IDistributedCache cache
     )
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly ILogger<UsersMicroserviceClient> _logger = logger;
+        private readonly IDistributedCache _cache = cache;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -22,9 +25,18 @@ namespace BusinessLogicLayer.HttpClients
         public async Task<User?> GetUserById(Guid userId)
         {
             HttpResponseMessage response;
+            string cacheKey = $"user_{userId}";
 
             try
             {
+                var cachedUser = await _cache.GetStringAsync(cacheKey);
+                if (cachedUser is not null)
+                {
+                    var user = JsonSerializer.Deserialize<User>(cachedUser, JsonOptions);
+                    if (user is not null)
+                        _logger.LogInformation("User found in cache for userId {UserId}", userId);
+                    return user;
+                }
                 response = await _httpClient.GetAsync($"/api/users/{userId}");
             }
             catch (HttpRequestException ex)
@@ -71,6 +83,12 @@ namespace BusinessLogicLayer.HttpClients
                         userId
                     );
 
+                var cacheOptions = new DistributedCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(100))
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(300));
+
+                _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(user), cacheOptions);
+                _logger.LogInformation("User not found for userId in cache {UserId}", userId);
                 return user;
             }
             catch (JsonException ex)
